@@ -3,7 +3,7 @@ import { useState, useEffect, useInsertionEffect } from "react"
 
 let username
 let game_id
-const socket = io.connect("http://localhost:8000/")
+const socket = io.connect("https://game-hub-4tbi.onrender.com/")
 
 
 
