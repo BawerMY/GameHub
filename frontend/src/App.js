@@ -3,13 +3,12 @@ import { useState, useEffect, useInsertionEffect } from "react"
 
 let username
 let game_id
-const socket = io.connect("https://game-hub-4tbi.onrender.com/")
+const socket = io.connect("localhost:8000")
 
 
 
 function Tris(props) {
-    const [game, setGame] = useState()
-    const turn = ["x", "o", "draw"]
+    const [game, setGame] = useState(false)// set to false not tested
     const [winner, setWinner] = useState(null)
 
     useEffect(() => {
@@ -51,9 +50,71 @@ function Tris(props) {
 }
 
 
-function Chess(game) {
+function Chess(props) {
+    const [game, setGame] = useState(false)
+    const [winner, setWinner] = useState(false)
+    const [moves, setMoves] = useState(false)
+
+    useEffect(() => {
+        socket.emit('get_game', props.id)
+    }, [])
+
+    useEffect(() => {
+        socket.on('moves', (movesNew) => console.log(movesNew))
+
+
+        socket.on("game", (data) => setGame(data))
+        socket.on("win", (data) => {
+            // belki bura bi cizgi cekmesini soyle
+            //belki her oyunda olan game, win, draw felani direk Games e koyarim
+            setWinner(data)
+        })
+
+        socket.on("draw", () => setWinner(2))
+}, [socket])
     return (
-        <div>chess</div>
+        <div className="bg-black h-[80vh] flex flex-wrap max-h-[90vw] aspect-square">{
+            game && game.game.board.map((row, i) => (row.map((cell, j) => <div onClick={() => moves !== false ? setMoves(false) : socket.emit('get_moves', {i: i, j:j})} key={""+i+j} className={`w-[calc(100%/8)] relative flex items-center justify-center h-[calc(100%/8)] bg-${(i+j) % 2 == 0 ? "white" : "green-700"}`}>{cell !== 0 ? <img width='75% ' src={`/images/chess/${cell}.svg`} alt={cell} /> : ''}{moves && moves[i][j] === true && <div className="w-[calc(100%/3) aspect-square absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 rounded-full bg-[#796d6d80]"></div>}</div>)))
+        }</div>
+    )
+}
+
+function Connect4(props) {
+    const [game, setGame] = useState(false)
+    const [winner, setWinner] = useState(false)
+
+    useEffect(() => {
+        socket.emit('get_game', props.id)
+    }, [])
+
+    useEffect(() => {
+        socket.on("game", (data) => setGame(data))
+        socket.on("win", (data) => {
+            // belki bura bi cizgi cekmesini soyle
+            //belki her oyunda olan game, win, draw felani direk Games e koyarim
+            setWinner(data)
+        })
+
+        socket.on("draw", () => setWinner(2))
+    }, [socket])
+
+    function move(c) {
+        let myTurn = false
+         for(let i = 0; i < game.players.length; i++) {
+             if(game.players[i].id === socket.id) myTurn = true
+         }
+         if(myTurn) {
+             socket.emit("move", c)
+         }
+     }
+    return (
+        <div className="bg-blue-800 h-[80vh] flex flex-wrap max-h-[90vw]" style={{aspectRatio: "7 / 6"}}>{
+            game && game.game.board.map((row, i) => (row.map((cell, j) =>
+            <div onClick={() => move(j)} className={`w-[calc(100%/7)] aspect-square flex items-center justify-center`}>
+                <div className={`w-3/4 aspect-square rounded-full bg-${cell === 0 ? 'white' : cell+'-600'} ${(game.game.board[i+1] === undefined || game.game.board[i+1][j] !== 0 ) && cell === 0 && "hover:bg-blue-400"}`}></div>
+                {/* (game.game.board[i+1] === undefined || game.game.board[i+1][j] !== 0) &&  */}
+                </div>)))
+        }</div>
     )
 }
 
@@ -95,7 +156,7 @@ function App() {
             useEffect(() => {
                 socket.on("game_colors", (data) => setGameColors(data))
 
-                socket.on("waiting_for_players", (data) => {console.log("wait"); setPopup(<WaitingForPlayers data={data} />)})
+                socket.on("waiting_for_players", (data) => setPopup(<WaitingForPlayers data={data} />))
 
                 socket.on("game_started", (data) => setPage(<Game id={data.id} game={data.game} />))
             }, [socket])
@@ -167,6 +228,30 @@ function App() {
                         if(game.players[i].id !== socket.id) return i
                     }
                    } ()]}</>
+            },
+            chess: {
+                me: <>{game && <div className={`bg-${['white', 'black'][function() {
+                    for(let i = 0; i < game.players.length; i++) {
+                        if(game.players[i].id === socket.id) return i
+                    }
+                   } ()]} w-full h-full rounded-lg`}></div>}</>,
+                opponent: <>{game && <div className={`bg-${['white', 'black'][function() {
+                    for(let i = 0; i < game.players.length; i++) {
+                        if(game.players[i].id !== socket.id) return i
+                    }
+                   } ()]} w-full h-full rounded-lg`}></div>}</>
+            },
+            connect4: {
+                me: <>{game && <div className={`bg-${['yellow', 'red'][function() {
+                    for(let i = 0; i < game.players.length; i++) {
+                        if(game.players[i].id === socket.id) return i
+                    }
+                   } ()]}-500 w-full h-full rounded-full`}></div>}</>,
+                opponent: <>{game && <div className={`bg-${['yellow', 'red'][function() {
+                    for(let i = 0; i < game.players.length; i++) {
+                        if(game.players[i].id !== socket.id) return i
+                    }
+                   } ()]}-500 w-full h-full rounded-full`}></div>}</>,
             }
         }
 
@@ -179,7 +264,9 @@ function App() {
         }, [socket])
         game_id = props.id
         const games = {
-            tris: <Tris id={props.id} />
+            tris: <Tris id={props.id} />,
+            chess: <Chess id={props.id} />,
+            connect4: <Connect4 id={props.id} />,
         }
 
 
@@ -249,108 +336,7 @@ function App() {
         )
     }
 
-    // function Game(game) {//Maybe do this: waiting on game page like chess.com
-    //     function PlayerBar() {
-    //         return (
-    //                 <div className="h-[10%] bg-blue-300">
-    //                     <div className="rounded-xl w-16 aspect-square bg-green-500"></div>
-    //                 </div>
-    //         )
-    //     }
-
-    //     useEffect(() => {
-    //         socket.emit()
-    //     }, [])
-
-    //     useEffect(() => {
-
-    //     }, [socket])
-
-    //     return (
-    //         <div className="flex flex-col w-full h-full">
-    //             <PlayerBar id={"121"} />
-    //             <PlayerBar username={username} />
-    //         </div>
-    //     )
-    // }
     
-
-
-    // function GamesList() {
-    //     const [publicGames, setPublicGames] = useState([])
-    //     useEffect(() => {
-    //         socket.emit("get_public_games")
-    //     }, [])
-
-        
-    //     useEffect(() => {
-    //         socket.on("public_games", (data) => {
-    //             setPublicGames(data)
-    //             console.log(data)
-    //         })
-
-    //         socket.on("game_joined", (id) => {
-    //             setPage(<GameHub id={id} />)
-    //         })
-    //     }, [socket])
-
-    //     return (
-    //         <div>
-    //             {publicGames.map(game => <div onClick={() => socket.emit("join_game", game.id)} key={game.id}>{game.id} | {game.game.name} | {game.host_id}</div>)}
-
-    //             <input className="border-black border-2" type="text" id="game_id" />
-    //             <button onClick={() => socket.emit("join_game", document.getElementById('game_id').value)}>JOIN</button>
-    //         </div>
-    //     )
-    // }
-
-    // function CreateGame() {
-    //     useEffect(() => {
-    //         socket.on("game_created", (data) => {
-    //             setPage(<GameHub id={data.id} />)
-    //         })
-    //     }, [socket])
-    //     return (
-    //         <div>
-    //             Create Game
-    //             <select name="" id="game">
-    //                 <option value="tris">Tris</option>
-    //                 <option value="chess">Chess</option>
-    //             </select>
-    //             private: <input type="checkbox" id="private" />
-    //             <button onClick={() => socket.emit("create_game", {private: document.getElementById("private").checked, game: document.getElementById("game").value})}>Create Game</button>
-    //         </div>
-    //     )
-    // }
-
-
-    // function GameHub(props) {
-    //     function startGame(game) {
-    //         switch (game.game.name) {
-    //             case "tris": return <Tris id={game.id} />
-    //         }
-    //     }
-
-    //     let [game, setGame] = useState(null)
-    //     useEffect(() => {
-    //         setGame(socket.emit("get_game", props.id))
-    //     }, [])
-
-    //     useEffect(() => {
-    //         socket.on("game", (data) => {
-    //             setGame(data)
-    //         })
-
-    //         socket.on("game_started", (game) => {
-    //             setPage(startGame(game))
-    //         })
-    //     }, [socket])
-    //     return (
-    //         <div>{game && socket.id === game.host_id && <button onClick={() => {socket.emit("start_game", game.id)}}>Start</button>}
-    //             {game && `${game.id} ${game.players}`}</div>
-    //     )
-    // }
-
 }
 
 export default App;

@@ -3,7 +3,6 @@ const app = express()
 const http = require("http")
 const { Server } = require("socket.io")
 const cors = require("cors")
-const { copyFileSync } = require('fs')
 
 app.use(cors())
 
@@ -52,10 +51,10 @@ games = {
                         if(this.board[j][2-j] == symbol) totD2+=1
                     }
     
-                    if(totRow === 3) return {winner:this.turn, type: "row", pos: i}
-                    if(totCol === 3) return {winner:this.turn, type: "col", pos: i}
-                    if(totD1 === 3) return {winner:this.turn, type: "d1"}
-                    if(totD2 === 3) return {winner:this.turn, type: "d2"}
+                    if(totRow === 3) return {winner: this.turn, type: "row", pos: i}
+                    if(totCol === 3) return {winner: this.turn, type: "col", pos: i}
+                    if(totD1 === 3) return {winner: this.turn, type: "d1"}
+                    if(totD2 === 3) return {winner: this.turn, type: "d2"}
                 }
                 return false
             }
@@ -69,6 +68,185 @@ games = {
             }
         }
     },
+    chess: class {
+        constructor() {
+            this.name = "chess"
+            this.playersNumber = 2
+            this.turn = 0
+            this.board = [
+                ["br", "bh", "bb", "bq", "bk", "bb", "bh", "br"],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0],
+                ["wr", "wh", "wb", "wq", "wk", "wb", "wh", "wr"],
+            ]
+            this.getMoves = function(data) {
+                let board = JSON.parse(JSON.stringify(this.board))
+        
+                let moves = [
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ],
+                    [false, false, false, false, false, false, false, false, ]
+                ]
+
+                function get_vertical() {
+                    for(let temp = data.i; temp < 8; temp++) {
+                        if(board[temp][data.j] === 0) moves[temp][data.j]
+                        else {
+                            moves[temp][data.j] = true
+                            break
+                        }
+                    }
+                    for(let temp = data.i; temp > -1; temp--) {
+                        console.log(temp)
+                        if(board[temp][data.j] === 0) moves[temp][data.j] = true
+                        else {
+                            moves[data.i-temp][data.j] = true
+                            break
+                        }
+                    }
+                }
+
+                function get_horizontal() {
+                    for(let temp = data.j; temp < 8; temp++) {
+                        if(board[data.i][temp] === 0) moves[data.i][temp] = true
+                        else {
+                            moves[data.i][temp] = true
+                            break
+                        }
+                    }
+                    for(let temp = data.i; temp > -1; temp--) {
+                        if(board[data.i][temp] === 0) moves[data.i][temp] = true
+                        else {
+                            moves[data.i][temp] = true
+                            break
+                        }
+                    }
+                }
+
+                if(board[data.i][data.j][1] === 'r') {
+                    get_vertical()
+                    get_horizontal()
+                }
+                return moves
+            }
+            this.move = function (game, move, user_id) {
+                if(this.board[move[0]][move[1]] != 0) return false
+                if(game.players[this.turn].id != user_id) return false
+                // func
+            }
+            this.win = function () {
+                // func
+            }
+            this.draw = function () {
+                // func
+            }
+        }
+    },
+    connect4: class {
+        constructor() {
+            this.name = "connect4"
+            this.playersNumber = 2
+            this.turn = 0
+            this.board = [
+                [0, 0, 0, 0, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, ],
+                [0, 0, 0, 0, 0, 0, 0, ],
+            ]
+
+            this.move = function (game, move, user_id) {
+                if(this.board[0][move] != 0) return false
+                if(game.players[this.turn].id != user_id) return false
+                let temp
+                for(let i = 0; i < this.board.length; i++) {
+                    if(this.board[i+1] === undefined || this.board[i+1][move] !== 0) {
+                        temp = i
+                        break
+                    }
+                }
+                this.board[temp][move] = ["yellow", "red"][this.turn]
+                if(this.win(temp, move) !== false) return(this.win(temp, move))
+                if(this.draw()) return {winner: false}
+                this.turn+=1
+                if(this.turn === game.players.length) this.turn = 0
+                return true
+            }
+            this.win = function (i, j) {
+                let color = ["yellow", "red"][this.turn]
+                let counter = 0
+                for(let temp = 0; temp < 6; temp++) {
+                    if(this.board[temp][j] === color) counter+=1
+                    if(counter > 3) return {winner: this.turn}
+                    if(this.board[temp][j] !== color) counter = 0
+                }
+                counter = 0
+                if(counter > 3) return {winner: this.turn}
+                for(let temp = 0; temp < 7; temp++) {
+                    if(this.board[i][temp] === color) counter+=1
+                    if(counter > 3) return {winner: this.turn}
+                    if(this.board[i][temp] !== color) counter = 0
+                }
+                counter = 0
+
+                // for(let i = )
+
+                // try {
+                //     if(this.board[i+1][j+1] === this.board[i+2][j+2] === this.board[i-1][j-1] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                // try {
+                //     if(this.board[i+1][j+1] === this.board[i-1][j-1] === this.board[i-2][j-2] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                // try {
+                //     if(this.board[i+1][j-1] === this.board[i-1][j+1] === this.board[i-2][j+2] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                // try {
+                //     if(this.board[i-1][j+1] === this.board[i+1][j-1] === this.board[i+2][j-2] === color) return {winner: this.turn}
+                // }
+
+                // catch {}
+                // try {
+                //     if(this.board[i+1][j+1] === this.board[i+2][j+2] === this.board[i+3][j+3] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                // try {
+                //     if(this.board[i-1][j-1] === this.board[i-2][j-2] === this.board[i-3][j-3] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                // try {
+                //     if(this.board[i+1][j-1] === this.board[i+2][j-2] === this.board[i+3][j-3] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                // try {
+                //     if(this.board[i-1][j+1] === this.board[i-2][j+2] === this.board[i-3][j+3] === color) return {winner: this.turn}
+                // }
+                // catch {}
+                
+                return false
+            }
+            this.draw = function () {
+                for(let i = 0; i < 6; i++) {
+                    for(let j = 0; j < 7; i++) {
+                        if(this.board[i][j] === 0) return false
+                    }
+                }
+                return true
+            }
+        }
+    }
 }
 
 db = {
@@ -83,12 +261,12 @@ function generateId() {
     return id
 }
 
-function getUsersGamesId(id) {
-    for(let game in db.games) {
-        if(db.games[game].host_id === id) return Number(db.games[game].id)
-    }
-    return false
-}
+// function getUsersGamesId(id) {
+//     for(let game in db.games) {
+//         if(db.games[game].host_id === id) return Number(db.games[game].id)
+//     }
+//     return false
+// }
 
 function getUsersPlyaingGamesId(id) {
     for(let game in db.games) {
@@ -123,20 +301,21 @@ function deleteGame(id) {
     // console.log("Game deleted: " + id)
 }
 
-function getPublicGames() {
-    public_games = []
-    for(let game in db.games) {
-            if(!db.games[game].private && !db.games[game].started) public_games.push(db.games[game])
-        }
-    return public_games
-}
+// function getPublicGames() {
+//     public_games = []
+//     for(let game in db.games) {
+//             if(!db.games[game].private && !db.games[game].started) public_games.push(db.games[game])
+//         }
+//     return public_games
+// }
 
 
 
 function getGameColors() {
     let games = {
         tris: false,
-        chess: false
+        // chess: false,
+        // connect4: false,
     }
 
     for(let game in db.games) {
@@ -196,7 +375,7 @@ io.on('connection', (socket) => {
     //     }
     // })
 
-    socket.on('set_username', (username) => {db.users[socket.id] = username})
+    socket.on('set_username', (username) => db.users[socket.id] = username)
 
     socket.on("quick_play", (game) => {
         temp = false
@@ -214,7 +393,6 @@ io.on('connection', (socket) => {
                 socket.emit("game_started", {id: temp, game: db.games[temp].game.name})
                 db.games[temp].started = true
                 socket.to(temp).emit("game_started", {id: temp, game: db.games[temp].game.name})
-                console.log(JSON.stringify(db.games[temp]))
             }
             else {
                 socket.emit("waiting_for_players", { connectedPlayers: db.games[temp].players.length, tot: db.games[temp].game.playersNumber })
@@ -265,6 +443,18 @@ io.on('connection', (socket) => {
         socket.to(upg).emit("waiting_for_players", { connectedPlayers: db.games[upg].players.length, tot: db.games[upg].game.playersNumber })
     })
 
+    socket.on('get_moves', (data) => {
+        let game = db.games[getUsersPlyaingGamesId(socket.id)]
+        if((function() {
+            for(let i = 0; i < game.players.length; i++) {
+                if(game.players[i].id === socket.id) return i
+            }
+        } ()) !== game.game.turn) return false
+        
+        moves = game.game.getMoves(data)
+        socket.emit('moves', moves)
+    })
+
 
 
 //dissconnect during the game handle
@@ -273,27 +463,11 @@ io.on('connection', (socket) => {
             temp = db.games[getUsersPlyaingGamesId(socket.id)].private
             socket.to(getUsersPlyaingGamesId(socket.id)).emit("game_ended", {detail: "opponent leaved the game"})
             deleteGame(getUsersPlyaingGamesId(socket.id))
-            if(!temp) socket.to("public_games").emit("public_games", getPublicGames())
+            // if(!temp) socket.to("public_games").emit("public_games", getPublicGames())
         }
         console.log(`User disconnected: ${socket.id}`)
     })
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
