@@ -3,7 +3,7 @@ import { useState, useEffect, useInsertionEffect } from "react"
 
 let username
 let game_id
-const socket = io.connect("localhost:8000")
+const socket = io.connect("https://game-hub-4tbi.onrender.com/")
 
 
 
@@ -205,7 +205,7 @@ function App() {
                 </header>
                 <div className="flex max-xl:flex-col max-xl:justify-end max-xl:gap-[10vw] max-xl:pb-[10vw] h-[85%] items-center justify-evenly">
                     <button onClick={() => setPopup(<QuickPlay playing={false} />)} className="bg-red-600 text-white rounded-2xl max-xl:w-[80%] max-xl:h-[15%] w-[33%] h-[15%] max-[480px]:text-[32px] max-[560px]:text-[36px] max-sm:text-[40px] max-md:text-[44px] max-lg:text-[48px] max-xl:text-[52px] max-2xl:text-[56px] text-[60px]">Quick Play</button>
-                    <button onClick={() => setPopup(<PrivateGame />)} className="bg-red-600 text-white rounded-2xl max-xl:w-[80%] max-xl:h-[15%] w-[33%] h-[15%] max-[480px]:text-[32px] max-[560px]:text-[36px] max-sm:text-[40px] max-md:text-[44px] max-lg:text-[48px] max-xl:text-[52px] max-2xl:text-[56px] text-[60px]">Private Game</button>
+                    {/* <button onClick={() => setPopup(<PrivateGame />)} className="bg-red-600 text-white rounded-2xl max-xl:w-[80%] max-xl:h-[15%] w-[33%] h-[15%] max-[480px]:text-[32px] max-[560px]:text-[36px] max-sm:text-[40px] max-md:text-[44px] max-lg:text-[48px] max-xl:text-[52px] max-2xl:text-[56px] text-[60px]">Private Game</button> */}
                 </div>
                 {popup}
             </>
