@@ -199,42 +199,45 @@ games = {
                 }
                 counter = 0
 
-                // for(let i = )
-
-                // try {
-                //     if(this.board[i+1][j+1] === this.board[i+2][j+2] === this.board[i-1][j-1] === color) return {winner: this.turn}
-                // }
-                // catch {}
-                // try {
-                //     if(this.board[i+1][j+1] === this.board[i-1][j-1] === this.board[i-2][j-2] === color) return {winner: this.turn}
-                // }
-                // catch {}
-                // try {
-                //     if(this.board[i+1][j-1] === this.board[i-1][j+1] === this.board[i-2][j+2] === color) return {winner: this.turn}
-                // }
-                // catch {}
-                // try {
-                //     if(this.board[i-1][j+1] === this.board[i+1][j-1] === this.board[i+2][j-2] === color) return {winner: this.turn}
-                // }
-
-                // catch {}
-                // try {
-                //     if(this.board[i+1][j+1] === this.board[i+2][j+2] === this.board[i+3][j+3] === color) return {winner: this.turn}
-                // }
-                // catch {}
-                // try {
-                //     if(this.board[i-1][j-1] === this.board[i-2][j-2] === this.board[i-3][j-3] === color) return {winner: this.turn}
-                // }
-                // catch {}
-                // try {
-                //     if(this.board[i+1][j-1] === this.board[i+2][j-2] === this.board[i+3][j-3] === color) return {winner: this.turn}
-                // }
-                // catch {}
-                // try {
-                //     if(this.board[i-1][j+1] === this.board[i-2][j+2] === this.board[i-3][j+3] === color) return {winner: this.turn}
-                // }
-                // catch {}
+                try {
+                    if(this.board[i-1][j+1] === color && this.board[i-2][j+2] === color && this.board[i-3][j+3] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i+1][j+1] === color && this.board[i+2][j+2] === color && this.board[i+3][j+3] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i+1][j-1] === color && this.board[i+2][j-2] === color && this.board[i+3][j-3] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i-1][j-1] === color && this.board[i-2][j-2] === color && this.board[i-3][j-3] === color) return {winner: this.turn}
+                } catch {}
                 
+                try {
+                    if(this.board[i+1][j-1] === color && this.board[i-1][j+1] === color && this.board[i-2][j+2] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i-1][j-1] === color && this.board[i+1][j+1] === color && this.board[i+2][j+2] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i-1][j+1] === color && this.board[i+1][j-1] === color && this.board[i+2][j-2] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i+1][j+1] === color && this.board[i-1][j-1] === color && this.board[i-2][j-2] === color) return {winner: this.turn}
+                } catch {}
+                
+                try {
+                    if(this.board[i+2][j-2] === color && this.board[i+1][j-1] === color && this.board[i-1][j+1] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i-2][j-2] === color && this.board[i-1][j-1] === color && this.board[i+1][j+1] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i-2][j+2] === color && this.board[i-1][j+1] === color && this.board[i+1][j-1] === color) return {winner: this.turn}
+                } catch {}
+                try {
+                    if(this.board[i+2][j+2] === color && this.board[i+1][j+1] === color && this.board[i-1][j-1] === color) return {winner: this.turn}
+                } catch {}
+
                 return false
             }
             this.draw = function () {
@@ -315,7 +318,7 @@ function getGameColors() {
     let games = {
         tris: false,
         // chess: false,
-        // connect4: false,
+        connect4: false,
     }
 
     for(let game in db.games) {

@@ -3,7 +3,7 @@ import { useState, useEffect, useInsertionEffect } from "react"
 
 let username
 let game_id
-const socket = io.connect("https://game-hub-4tbi.onrender.com/")
+const socket = io.connect("localhost:8000" || "https://game-hub-4tbi.onrender.com/")
 
 
 
@@ -178,7 +178,7 @@ function App() {
                         {gameColors && Object.keys(gameColors).map((game) =>
                         <div key={game} className="xl:w-1/3 w-1/2 xl:p-8 p-4">
                             <div onClick={() => socket.emit("quick_play", game)} className={`bg-${gameColors[game] ? "green" : "red"}-600 rounded-[32px] w-full`} style={{aspectRatio: "1 / 1.19"}}>
-                                <div className="bg-gray-800 rounded-[32px] items-center justify-center w-full aspect-square">{game}</div>
+                                <div className="bg-gray-800 rounded-[32px] items-center justify-center w-full aspect-square"><div className="text-white text-center h-full text-[64px]">{game}</div></div>
                             </div>
                         </div>
                         )}
