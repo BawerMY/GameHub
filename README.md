@@ -8,4 +8,5 @@
  * Connect4
  ### Back-end ExpressJs
  ### Front-end ReactJs
+ * Tailwindcss
  ### Connection Socket.io
