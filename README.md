@@ -5,7 +5,7 @@
 
  ## Games
  * Tris | Tic-Tac-Toe | XOX
- * Chess(Upcomming)
+ * Connect4
  ## Back-end ExpressJs
  ## Front-end ReactJs
  ## Connection Socket.io
