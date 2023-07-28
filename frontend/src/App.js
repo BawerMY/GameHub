@@ -210,6 +210,7 @@ function App() {
             useEffect(() => {
                 socket.on("waiting_for_players", (data) => setPopup(<WaitingForPlayers data={data} />))
                 socket.on("game_started", (data) => setPage(<Game id={data.id} game={data.game} />))
+                socket.on("error", alert("Error :("))
             }, [socket])
 
             return (

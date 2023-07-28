@@ -468,7 +468,9 @@ io.on('connection', (socket) => {
     })
 
     socket.on("join_private_game", (id) => {
-        db.games[id].players.push({id: socket.id, username: db.users[socket.id]})
+        if(Object.keys(db.games).includes(id)) return socket.emit("error")
+        try {
+            db.games[id].players.push({id: socket.id, username: db.users[socket.id]})
             socket.join(id)
             socket.leave("get_game_colors")
             if(db.games[id].players.length === db.games[id].game.playersNumber) {
@@ -480,6 +482,10 @@ io.on('connection', (socket) => {
                 socket.emit("waiting_for_players", { connectedPlayers: db.games[id].players.length, tot: db.games[id].game.playersNumber, id: temp.id })
                 socket.to(id).emit("waiting_for_players", { connectedPlayers: db.games[id].players.length, tot: db.games[id].game.playersNumber, id: temp.id })
             }
+        }
+        catch {
+            socket.emit("error")
+        }
     })
 
 
