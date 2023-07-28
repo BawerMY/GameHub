@@ -1,6 +1,6 @@
 import io from "socket.io-client"
 import { useState, useEffect, useInsertionEffect } from "react"
-
+// delete games when setpopup false
 let username
 let game_id
 const socket = io.connect("https://game-hub-4tbi.onrender.com/")
@@ -145,32 +145,49 @@ function App() {
     function Home({ playing }) {
         const [popup, setPopup] = useState(playing !== false ? <QuickPlay playing={playing} /> : false)
 
+        
+
+
+        
+
+        function WaitingForPlayers({ data }) {
+            useEffect(() => {
+                socket.on("game_started", (data) => setPage(<Game id={data.id} game={data.game} />))
+            }, [socket])
+
+            return (//to do good
+                <div onClick={() => setPopup(false)} className="fixed flex items-center justify-center w-screen h-screen top-0 left-0 bg-[#00000080]">
+                    <div onClick={(e) => e.stopPropagation()} className="text-center p-8 text-white bg-green-600 rounded-md">
+                        {data.id && <div className="text-[40px] max-sm:text-[20px] font-bold">Game ID: {data.id}</div>}
+                        <div className="text-[40px] max-sm:text-[20px] font-bold">Waiting for players</div>
+                        <div className="text-[32px] max-sm:text-[16px] font-bold">{data.connectedPlayers} / {data.tot}</div>
+                    </div>
+                </div>
+            )
+        }
+
+        
         function QuickPlay({ playing }) {
             const [gameColors, setGameColors] = useState(false)
 
             useEffect(() => {
-                if(playing !== false) socket.emit("quick_play", playing)
-                setGameColors(socket.emit("get_game_colors"))
-            }, [])
-
-            useEffect(() => {
-                socket.on("game_colors", (data) => setGameColors(data))
-
                 socket.on("waiting_for_players", (data) => setPopup(<WaitingForPlayers data={data} />))
-
+                socket.on("game_colors", (data) => setGameColors(data))
                 socket.on("game_started", (data) => setPage(<Game id={data.id} game={data.game} />))
             }, [socket])
 
-            function WaitingForPlayers({ data }) {
-                return (//to do good
-                    <div onClick={() => setPopup(false)} className="fixed flex items-center justify-center w-screen h-screen top-0 left-0 bg-[#00000080]">
-                        <div onClick={(e) => e.stopPropagation()} className="text-center p-8 text-white bg-green-600 rounded-md">
-                            <div className="text-[40px] max-sm:text-[20px] font-bold">Waiting for players</div>
-                            <div className="text-[32px] max-sm:text-[16px] font-bold">{data.connectedPlayers} / {data.tot}</div>
-                        </div>
-                    </div>
-                )
-            }
+            useEffect(() => {
+                if(playing !== false) socket.emit("quick_play", playing)
+                socket.emit("get_game_colors")
+            }, [])
+
+            useEffect(() => {
+                if(playing !== false) socket.emit("quick_play", playing)
+                socket.on("game_colors", (gc) => setGameColors(gc))
+            }, [socket])
+            
+
+            
 
             return (//ipad resolution responsivity error
                 <div onClick={() => setPopup(false)} className="fixed flex items-center justify-center w-screen h-screen top-0 left-0 bg-[#00000080]">
@@ -189,15 +206,54 @@ function App() {
         }
 
         function PrivateGame() {
+
+            useEffect(() => {
+                socket.on("waiting_for_players", (data) => setPopup(<WaitingForPlayers data={data} />))
+                socket.on("game_started", (data) => setPage(<Game id={data.id} game={data.game} />))
+            }, [socket])
+
             return (
                 <div onClick={() => setPopup(false)} className="fixed flex items-center justify-center w-screen h-screen top-0 left-0 bg-[#00000080]">
-                    <div onClick={(e) => e.stopPropagation()} className="max-xl:w-[85%] w-[60%] h-[60%] bg-blue-800">
-                        
+                    <div onClick={(e) => e.stopPropagation()} className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                            <input className="rounded-2xl px-2 text-[24px]" type="text" name="game_id" id="game_id" placeholder="Game ID" />
+                            <button onClick={() => socket.emit("join_private_game", Number(document.getElementById("game_id").value))} className="bg-red-600 text-white rounded-2xl p-4 text-[24px]">JOIN</button>
+                        </div>
+                        <button onClick={() => setPopup(<GamesList />)} className="bg-red-600 text-white rounded-2xl p-4 text-[24px]">CREATE GAME</button>
                     </div>
                 </div>
             )
-        }
 
+            function GamesList() {
+                const [gameColors, setGameColors] = useState(false)
+
+                useEffect(() => {
+                    socket.on("waiting_for_players", (data) => setPopup(<WaitingForPlayers data={data} />))
+                    socket.on("game_colors", (gc) => setGameColors(gc))
+                    socket.on("game_started", (data) => setPage(<Game id={data.id} game={data.game} />))
+                }, [socket])
+
+                useEffect(() => {
+                    socket.emit("get_game_colors")
+                }, [])
+
+                return (
+                    <div onClick={() => setPopup(false)} className="fixed flex items-center justify-center w-screen h-screen top-0 left-0 bg-[#00000080]">
+                        <div className="flex flex-wrap max-xl:w-[85%] w-[60%]">
+                            {gameColors && Object.keys(gameColors).map((game) =>
+                            <div key={game} className="xl:w-1/3 w-1/2 xl:p-8 p-4">
+                                <div onClick={(e) => {socket.emit("create_private_game", game); e.stopPropagation()}} className="bg-gray-800 rounded-[32px] items-center justify-center w-full aspect-square">
+                                    <div className="text-white text-center h-full text-[64px]">{game}</div>
+                                </div>
+                            </div>
+                            )}
+
+                        </div>
+                    </div>
+                )
+            }
+
+        }
         return (
             <>
                 <header className="h-[15%] bg-[#D9D9D9] flex items-center justify-center">
@@ -205,7 +261,7 @@ function App() {
                 </header>
                 <div className="flex max-xl:flex-col max-xl:justify-end max-xl:gap-[10vw] max-xl:pb-[10vw] h-[85%] items-center justify-evenly">
                     <button onClick={() => setPopup(<QuickPlay playing={false} />)} className="bg-red-600 text-white rounded-2xl max-xl:w-[80%] max-xl:h-[15%] w-[33%] h-[15%] max-[480px]:text-[32px] max-[560px]:text-[36px] max-sm:text-[40px] max-md:text-[44px] max-lg:text-[48px] max-xl:text-[52px] max-2xl:text-[56px] text-[60px]">Quick Play</button>
-                    {/* <button onClick={() => setPopup(<PrivateGame />)} className="bg-red-600 text-white rounded-2xl max-xl:w-[80%] max-xl:h-[15%] w-[33%] h-[15%] max-[480px]:text-[32px] max-[560px]:text-[36px] max-sm:text-[40px] max-md:text-[44px] max-lg:text-[48px] max-xl:text-[52px] max-2xl:text-[56px] text-[60px]">Private Game</button> */}
+                    <button onClick={() => setPopup(<PrivateGame />)} className="bg-red-600 text-white rounded-2xl max-xl:w-[80%] max-xl:h-[15%] w-[33%] h-[15%] max-[480px]:text-[32px] max-[560px]:text-[36px] max-sm:text-[40px] max-md:text-[44px] max-lg:text-[48px] max-xl:text-[52px] max-2xl:text-[56px] text-[60px]">Private Game</button>
                 </div>
                 {popup}
             </>

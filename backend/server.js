@@ -385,9 +385,11 @@ io.on('connection', (socket) => {
         for(let id in db.games) {
             if(!db.games[id].private && !db.games[id].started && db.games[id].game.name === game) temp = Number(id)
         }
-        if(temp !== false) {for(let i = 0; i < db.games[id].players.length; i++) {
-            if(db.games[id].players[i].id === socket.id) return
-        }}
+        if(temp !== false) {
+            for(let i = 0; i < db.games[id].players.length; i++) {
+                if(db.games[id].players[i].id === socket.id) return
+            }
+        }
         if(temp !== false) {
             db.games[temp].players.push({id: socket.id, username: db.users[socket.id]})
             socket.join(temp)
@@ -456,6 +458,28 @@ io.on('connection', (socket) => {
         
         moves = game.game.getMoves(data)
         socket.emit('moves', moves)
+    })
+
+    socket.on("create_private_game", (game) => {
+        let temp = createGame({ private: true, game: game }, {id: socket.id, username: db.users[socket.id]})
+        socket.join(temp.id)
+        socket.emit("waiting_for_players", { connectedPlayers: temp.players.length, tot: temp.game.playersNumber, id: temp.id })
+        socket.to(temp.id).emit("waiting_for_players", { connectedPlayers: temp.players.length, tot: temp.game.playersNumber, id: temp.id })
+    })
+
+    socket.on("join_private_game", (id) => {
+        db.games[id].players.push({id: socket.id, username: db.users[socket.id]})
+            socket.join(id)
+            socket.leave("get_game_colors")
+            if(db.games[id].players.length === db.games[id].game.playersNumber) {
+                socket.emit("game_started", {id: id, game: db.games[id].game.name})
+                db.games[id].started = true
+                socket.to(id).emit("game_started", {id: id, game: db.games[id].game.name})
+            }
+            else {
+                socket.emit("waiting_for_players", { connectedPlayers: db.games[id].players.length, tot: db.games[id].game.playersNumber, id: temp.id })
+                socket.to(id).emit("waiting_for_players", { connectedPlayers: db.games[id].players.length, tot: db.games[id].game.playersNumber, id: temp.id })
+            }
     })
 
 
